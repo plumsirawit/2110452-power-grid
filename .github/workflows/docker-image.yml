@@ -17,7 +17,7 @@ jobs:
       - name: Build the Docker image and run the tests
         run: |
           brew services start colima
-          /usr/local/opt/colima/bin/colima start
+          /opt/homebrew/opt/colima/bin/colima start
           docker build . --file Dockerfile --tag power-grid:latest
           /bin/bash ./runner.sh
         timeout-minutes: 60
