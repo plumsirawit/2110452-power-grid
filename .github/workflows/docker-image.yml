@@ -10,10 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: (WORKAROUND) Unlink python@3.12
-        run: brew unlink python@3.12
       - name: Install colima and docker
-        run: brew install colima docker
+        run: brew install colima@0.6.7 docker
       - name: Build the Docker image and run the tests
         run: |
           brew services start colima
