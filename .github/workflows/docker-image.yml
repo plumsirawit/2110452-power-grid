@@ -10,13 +10,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Build the Docker image
+      - name: Build the Docker image and run the tests
         run: |
           brew install docker
           colima start
           docker build . --file Dockerfile --tag power-grid:$(date +%s)
-      - name: Run the tests
-        run: /bin/bash ./runner.sh
+          /bin/bash ./runner.sh
         timeout-minutes: 60
       - name: Archive run results
         uses: actions/upload-artifact@v4
