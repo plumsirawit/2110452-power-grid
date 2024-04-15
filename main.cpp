@@ -8,7 +8,9 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#ifndef MAX_THREADS
 #define MAX_THREADS 12
+#endif
 
 std::default_random_engine engine;
 
