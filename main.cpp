@@ -8,6 +8,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#define MAX_THREADS 12
 
 std::default_random_engine engine;
 
@@ -15,15 +16,12 @@ class BacktrackingContext {
   public:
     std::bitset<128> covered;
     std::bitset<128> stat;
-    int avail_threads;
     BacktrackingContext() {
         covered.reset();
         stat.reset();
-        avail_threads = 0;
     }
     BacktrackingContext(const BacktrackingContext &other)
-        : covered(other.covered), stat(other.stat),
-          avail_threads(other.avail_threads) {}
+        : covered(other.covered), stat(other.stat) {}
 };
 
 class Instance {
@@ -53,6 +51,10 @@ void Instance::load(std::ifstream &inf) {
 
 std::bitset<128> shared_global;
 std::mutex shared_mutex;
+
+int tcnt;
+int mxcnt;
+std::mutex tcnt_mutex;
 void rec(Instance &inst, BacktrackingContext ctx, std::bitset<128> &out) {
     if (ctx.covered.count() == inst.n) {
         out = ctx.stat;
@@ -117,28 +119,29 @@ void rec(Instance &inst, BacktrackingContext ctx, std::bitset<128> &out) {
         outs.push_back({});
     }
     std::bitset<128> out1;
-    if (ctx.avail_threads > 0) {
-        ctx.avail_threads -= ctxs.size();
-        if (ctx.avail_threads < 0)
-            ctx.avail_threads = 0;
-        int divisor = ctxs.size() + 1;
-        ctx1.avail_threads =
-            ctx.avail_threads - (ctx.avail_threads / divisor) * ctxs.size();
-        std::vector<std::thread> threads;
-        for (int i = 0; i < ctxs.size(); i++) {
-            ctxs[i].avail_threads = ctx.avail_threads / divisor;
+    int divisor = ctxs.size();
+    std::vector<std::thread> threads;
+    int instnum;
+    {
+        std::lock_guard<std::mutex> guard(tcnt_mutex);
+        int curtcnt = tcnt;
+        instnum =
+            std::max(0, std::min((int)ctxs.size(), MAX_THREADS - 1 - curtcnt));
+        for (int i = 0; i < instnum; i++) {
             threads.emplace_back(rec, std::ref(inst), ctxs[i],
                                  std::ref(outs[i]));
+            tcnt++;
+            mxcnt = std::max(mxcnt, tcnt);
         }
-        rec(inst, ctx1, out1);
-        for (int i = 0; i < ctxs.size(); i++) {
-            threads[i].join();
-        }
-    } else {
-        rec(inst, ctx1, out1);
-        for (int i = 0; i < ctxs.size(); i++) {
-            rec(inst, ctxs[i], outs[i]);
-        }
+    }
+    for (int i = instnum; i < ctxs.size(); i++) {
+        rec(inst, ctxs[i], outs[i]);
+    }
+    rec(inst, ctx1, out1);
+    for (int i = 0; i < threads.size(); i++) {
+        threads[i].join();
+        std::lock_guard<std::mutex> guard(tcnt_mutex);
+        tcnt--;
     }
     out = out1;
     for (int i = 0; i < ctxs.size(); i++) {
@@ -158,7 +161,7 @@ std::string Instance::solve() {
     engine.seed(42); // for consistency during tests
     shared_global.set();
     BacktrackingContext ctx;
-    ctx.avail_threads = 11;
+    tcnt = 0;
     std::bitset<128> inner;
     rec(*this, ctx, inner);
     std::string out;
@@ -190,6 +193,7 @@ int main(int argc, char *argv[]) {
     }
     Instance inst;
     inst.load(inf);
+    std::cout << "Loading complete. Solving..." << std::endl;
     ouf << inst.solve() << std::endl;
     return 0;
 }
