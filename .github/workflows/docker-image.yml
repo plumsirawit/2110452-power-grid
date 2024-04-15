@@ -10,8 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: (WORKAROUND) Overwrite all conflicting files
-        run: brew link --overwrite python@3.12
+      - name: (WORKAROUND) Unlink python@3.12
+        run: brew unlink python@3.12
       - name: Install colima and docker
         run: brew install colima docker
       - name: Build the Docker image and run the tests
