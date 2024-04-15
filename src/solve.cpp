@@ -1,55 +1,10 @@
+#include "util.h"
 #include <algorithm>
-#include <bitset>
-#include <fstream>
-#include <iostream>
 #include <mutex>
 #include <random>
-#include <string>
 #include <thread>
-#include <utility>
-#include <vector>
-#ifndef MAX_THREADS
-#define MAX_THREADS 12
-#endif
 
 std::default_random_engine engine;
-
-class BacktrackingContext {
-  public:
-    std::bitset<128> covered;
-    std::bitset<128> stat;
-    BacktrackingContext() {
-        covered.reset();
-        stat.reset();
-    }
-    BacktrackingContext(const BacktrackingContext &other)
-        : covered(other.covered), stat(other.stat) {}
-};
-
-class Instance {
-  public:
-    int n;
-    std::vector<std::pair<int, int>> edges;
-    std::vector<std::vector<int>> g;
-    Instance() : n(0), edges({}), g({}) {}
-    void load(std::ifstream &inf);
-    std::string solve();
-};
-
-void Instance::load(std::ifstream &inf) {
-    inf >> n;
-    g.resize(n);
-    int m;
-    inf >> m;
-    edges.reserve(m);
-    for (int i = 0; i < m; i++) {
-        int u, v;
-        inf >> u >> v;
-        edges.push_back({u, v});
-        g[u].push_back(v);
-        g[v].push_back(u);
-    }
-}
 
 std::bitset<128> shared_global;
 std::mutex shared_mutex;
@@ -57,6 +12,7 @@ std::mutex shared_mutex;
 int tcnt;
 int mxcnt;
 std::mutex tcnt_mutex;
+
 void rec(Instance &inst, BacktrackingContext ctx, std::bitset<128> &out) {
     if (ctx.covered.count() == inst.n) {
         out = ctx.stat;
@@ -174,28 +130,4 @@ std::string Instance::solve() {
             out.push_back('0');
     }
     return out;
-}
-
-int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        std::cout << "Usage: ./main <input-filename> <output-filename>"
-                  << std::endl;
-        return 0;
-    }
-    std::ifstream inf(argv[1]);
-    if (inf.fail()) {
-        std::cout << "Error opening input file. Check whether file exists."
-                  << std::endl;
-        return 0;
-    }
-    std::ofstream ouf(argv[2]);
-    if (ouf.fail()) {
-        std::cout << "Error opening output file." << std::endl;
-        return 0;
-    }
-    Instance inst;
-    inst.load(inf);
-    std::cout << "Loading complete. Solving..." << std::endl;
-    ouf << inst.solve() << std::endl;
-    return 0;
 }

@@ -3,7 +3,10 @@
 CWD=$(pwd)
 echo $CWD
 rm -f run.txt log.txt
-touch run.txt log.txt
+touch run.txt
+touch log.txt
+rm -rf $CWD/data/output
+mkdir $CWD/data/output
 for filename in ./data/input/*; do
     FNAME=$(basename $filename)
     echo "Running $FNAME"
