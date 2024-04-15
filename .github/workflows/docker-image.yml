@@ -10,10 +10,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install colima and docker
+        run: brew install colima docker
       - name: Build the Docker image and run the tests
         run: |
-          brew install colima
-          brew install docker
           colima start
           docker build . --file Dockerfile --tag power-grid:latest
           /bin/bash ./runner.sh
