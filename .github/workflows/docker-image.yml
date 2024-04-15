@@ -10,11 +10,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: (WORKAROUND) Remove 2to3
+        run: rm '/usr/local/bin/2to3'
       - name: Install colima and docker
         run: brew install colima docker
       - name: Build the Docker image and run the tests
         run: |
-          colima start
+          brew services start colima
           docker build . --file Dockerfile --tag power-grid:latest
           /bin/bash ./runner.sh
         timeout-minutes: 60
