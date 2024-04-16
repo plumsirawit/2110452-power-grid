@@ -10,6 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Replace MAX_THREADS by 8
+        run: sed -i 's/THREADS=12/THREADS=8/g' ./Dockerfile
       - name: Install python 3.12
         run: brew install -f --overwrite python@3.12
       - name: Install colima and docker
